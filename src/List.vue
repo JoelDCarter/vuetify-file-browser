@@ -247,7 +247,8 @@ export default {
                 this.$emit("loading", true);
                 let url = this.endpoints.delete.url
                     .replace(new RegExp("{storage}", "g"), this.storage)
-                    .replace(new RegExp("{path}", "g"), item.path);
+                    .replace(new RegExp("{path}", "g"), item.path)
+                    .replace(new RegExp("{nodeId}", "g"), item.nodeId || "" );
 
                 let config = {
                     url,
