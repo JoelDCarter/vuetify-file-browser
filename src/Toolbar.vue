@@ -48,13 +48,14 @@
                 <span v-else>Up to "{{pathSegments[pathSegments.length - 2].name}}"</span>
             </v-tooltip>
             <v-menu
+                v-if="path" 
                 v-model="newFolderPopper"
                 :close-on-content-click="false"
                 :nudge-width="200"
                 offset-y
             >
                 <template v-slot:activator="{ on }">
-                    <v-btn v-if="path" icon v-on="on" title="Create Folder">
+                    <v-btn icon v-on="on" title="Create Folder">
                         <v-icon>mdi-folder-plus-outline</v-icon>
                     </v-btn>
                 </template>

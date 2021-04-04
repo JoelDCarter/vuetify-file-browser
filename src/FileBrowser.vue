@@ -1,5 +1,6 @@
 <template>
     <v-card class="mx-auto" :loading="loading > 0">
+        <confirm ref="confirm"></confirm>
         <toolbar
             :root="root"
             :path="path"
@@ -75,6 +76,7 @@ import Toolbar from "./Toolbar.vue";
 import Tree from "./Tree.vue";
 import List from "./List.vue";
 import Upload from "./Upload.vue";
+import Confirm from "./Confirm.vue";
 
 const availableStorages = [
     {
@@ -133,7 +135,8 @@ export default {
         Toolbar,
         Tree,
         List,
-        Upload
+        Upload,
+        Confirm
     },
     model: {
         prop: "path",
@@ -226,16 +229,29 @@ export default {
         pathChanged(path) {
             this.path = path;
             this.$emit("change", path);
+        },
+        async responseErrorHandler(error) {
+            this.$emit("loading", false);
+            let confirmed = await this.$refs.confirm.open(
+                    "Error",
+                    `The server returned the following error:<br>${(error.response.data && error.response.data.detail) || error.message}`,
+                    { showCancel: false, yesText: "OK" }
+                );
+            return Promise.reject(error);
         }
     },
     created() {
         this.activeStorage = this.storage;
         this.axiosInstance = this.axios || axios.create(this.axiosConfig);
+        this.axiosInstance.interceptors.response.use(undefined, this.responseErrorHandler);
     },
     mounted() {
         if (!this.path && !(this.tree && this.$vuetify.breakpoint.smAndUp)) {
-            this.pathChanged(this.root.path || "/");
+            this.pathChanged(this.root.path + "/");
         }
+    },
+    beforeDestroy() {
+        this.axiosInstance.interceptors.response.eject(this.responseErrorHandler);
     }
 };
 </script>

@@ -86,7 +86,7 @@ export default {
             setTimeout(async () => {
                 if (this.root.path)
                 {
-                    let rootItem = { path: this.root.path, children: [] };
+                    let rootItem = { path: this.root.path + "/", children: [] };
                     await this.readFolder(rootItem);
                     this.items = rootItem.children;
                 }
@@ -95,7 +95,7 @@ export default {
                     this.items = [
                         {
                             type: "dir",
-                            path: this.root.path || "/",
+                            path: "/",
                             basename: this.root.name || "root",
                             extension: "",
                             name: this.root.name || "root",
@@ -104,9 +104,8 @@ export default {
                     ];
                 }
             }, 0);
-            let path = this.root.path ? this.root.path + "/" : "";
-            if (this.path !== path) {
-                this.$emit("path-changed", path);
+            if (this.path !== "") {
+                this.$emit("path-changed", "");
             }
         },
         async readFolder(item) {

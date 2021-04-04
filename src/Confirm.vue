@@ -11,8 +11,8 @@
             <v-card-text v-if="message" class="pa-4 text-center" v-html="message"></v-card-text>
             <v-card-actions class="pt-0">
                 <v-spacer></v-spacer>
-                <v-btn text @click="cancel">Cancel</v-btn>
-                <v-btn depressed :color="options.color" @click="agree">Yes</v-btn>
+                <v-btn v-if="options.showCancel" text @click="cancel">{{ options.cancelText }}</v-btn>
+                <v-btn depressed :color="options.color" @click="agree">{{ options.yesText }}</v-btn>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -46,6 +46,9 @@ export default {
         options: {
             color: "error",
             width: 300,
+            cancelText: "Cancel",
+            yesText: "Yes",
+            showCancel: true
         }
     }),
     methods: {
