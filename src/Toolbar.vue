@@ -38,7 +38,7 @@
         <div class="flex-grow-1"></div>
 
         <template v-if="$vuetify.breakpoint.smAndUp">
-            <v-tooltip bottom v-if="pathSegments.length > 0">
+            <v-tooltip bottom v-if="showFolderUpInToolbar && pathSegments.length > 0">
                 <template v-slot:activator="{ on }">
                     <v-btn icon @click="goUp" v-on="on">
                         <v-icon>mdi-arrow-up-bold-outline</v-icon>
@@ -76,7 +76,7 @@
                 </v-card>
             </v-menu>
             <v-btn v-if="path" icon @click="$refs.inputUpload.click()" title="Upload Files">
-                <v-icon>mdi-plus-circle</v-icon>
+                <v-icon>mdi-file-upload-outline</v-icon>
                 <input v-show="false" ref="inputUpload" type="file" multiple @change="addFiles" />
             </v-btn>
         </template>
@@ -91,7 +91,8 @@ export default {
         root: Object,
         path: String,
         endpoints: Object,
-        axios: Function
+        axios: Function,
+        showFolderUpInToolbar: Boolean,
     },
     data() {
         return {

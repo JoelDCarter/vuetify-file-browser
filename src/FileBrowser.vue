@@ -8,6 +8,7 @@
             :storage="activeStorage"
             :endpoints="endpoints"
             :axios="axiosInstance"
+            :showFolderUpInToolbar="showFolderUpInToolbar"
             v-on:storage-changed="storageChanged"
             v-on:path-changed="pathChanged"
             v-on:add-files="addUploadingFiles"
@@ -44,6 +45,7 @@
                     v-on:refreshed="refreshPending = false"
                     v-on:file-deleted="refreshPending = true"
                     v-on:file-selected="(item) => $emit('file-selected', item)"
+                    v-on:file-opened="(item) => $emit('file-opened', item)"
                     v-on:item-deleting="(item, setMessage) => $emit('item-deleting', item, setMessage)"
                 ></list>
             </v-col>
@@ -169,7 +171,9 @@ export default {
         // starting path
         initialPath: { type: String, default: "/" },
         // indicate whether files should be displayed in the tree
-        showFilesInTree: {type: Boolean, default: false }
+        showFilesInTree: {type: Boolean, default: false },
+        // indicate whether the button for navigating up one level should be displayed in the toolbar
+        showFolderUpInToolbar: {type: Boolean, default: false }
     },
     data() {
         return {

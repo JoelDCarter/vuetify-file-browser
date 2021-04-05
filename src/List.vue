@@ -41,7 +41,8 @@
                     v-for="item in files"
                     :key="item.basename"
                     @click="itemClicked(item)"
-                    v-selected="fileSelected(item)"
+                    :input-value="item === selectedFile"
+                    v-opened="fileOpened(item)"
                     class="pl-0"
                 >
                     <v-list-item-avatar class="ma-0">
@@ -118,20 +119,21 @@ export default {
     data() {
         return {
             items: [],
-            filter: ""
+            filter: "",
+            selectedFile: null
         };
     },
     computed: {
         dirs() {
             return this.items.filter(
                 item =>
-                    item.type === "dir" && item.basename.includes(this.filter)
+                    item.type === "dir" && item.basename.toLowerCase().includes(this.filter.toLowerCase())
             );
         },
         files() {
             return this.items.filter(
                 item =>
-                    item.type === "file" && item.basename.includes(this.filter)
+                    item.type === "file" && item.basename.toLowerCase().includes(this.filter.toLowerCase())
             );
         },
         isDir() {
@@ -142,7 +144,7 @@ export default {
         }
     },
     directives: {
-        selected: {
+        opened: {
             bind: function (el, binding, vNode) {
                 // Make sure expression provided is a function
                 if (typeof binding.value !== 'function') {
@@ -194,8 +196,8 @@ export default {
                 //el.addEventListener("mousedown", start);
                 el.addEventListener("touchstart", start);
                 // Cancel timeouts if these events happen
-                el.addEventListener("click", cancel);
-                el.addEventListener("mouseout", cancel);
+                //el.addEventListener("click", cancel);
+                //el.addEventListener("mouseout", cancel);
                 el.addEventListener("touchend", cancel);
                 el.addEventListener("touchcancel", cancel);
             }
@@ -206,10 +208,16 @@ export default {
         itemClicked(item) {
             if (item.type === "dir") {
                 this.changePath(item.path);
+            } else {
+                if (this.selectedFile !== item) {
+                    this.selectedFile = item;
+                } else {
+                    this.selectedFile = null;
+                }
             }
         },
-        fileSelected(item) {
-            return () => this.$emit("file-selected", item);
+        fileOpened(item) {
+            return () => this.$emit("file-opened", item);
         },
         changePath(path) {
             this.$emit("path-changed", path);
@@ -217,6 +225,7 @@ export default {
         async load() {
             this.$emit("loading", true);
             if (this.isDir) {
+                this.selectedFile = null;
                 let url = this.endpoints.list.url
                     .replace(new RegExp("{storage}", "g"), this.storage)
                     .replace(new RegExp("{path}", "g"), this.path);
@@ -271,6 +280,9 @@ export default {
                 await this.load();
                 this.$emit("refreshed");
             }
+        },
+        selectedFile(value) {
+            this.$emit("file-selected", value);
         }
     }
 };
