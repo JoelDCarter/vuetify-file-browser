@@ -55,7 +55,7 @@
                     </v-list-item-content>
 
                     <v-list-item-action>
-                        <v-btn icon @click.stop="deleteItem(item)">
+                        <v-btn icon v-if="!readOnly" @click.stop="deleteItem(item)">
                             <v-icon color="grey lighten-1">mdi-delete-outline</v-icon>
                         </v-btn>
                         <v-btn icon v-if="false">
@@ -112,6 +112,7 @@ export default {
         endpoints: Object,
         axios: Function,
         refreshPending: Boolean,
+        readOnly: Boolean
     },
     components: {
         Confirm

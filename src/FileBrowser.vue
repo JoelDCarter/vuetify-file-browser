@@ -9,6 +9,7 @@
             :endpoints="endpoints"
             :axios="axiosInstance"
             :showFolderUpInToolbar="showFolderUpInToolbar"
+            :readOnly="readOnly"
             v-on:storage-changed="storageChanged"
             v-on:path-changed="pathChanged"
             v-on:add-files="addUploadingFiles"
@@ -40,6 +41,7 @@
                     :endpoints="endpoints"
                     :axios="axiosInstance"
                     :refreshPending="refreshPending"
+                    :readOnly="readOnly"
                     v-on:path-changed="pathChanged"
                     v-on:loading="loadingChanged"
                     v-on:refreshed="refreshPending = false"
@@ -173,7 +175,9 @@ export default {
         // indicate whether files should be displayed in the tree
         showFilesInTree: {type: Boolean, default: false },
         // indicate whether the button for navigating up one level should be displayed in the toolbar
-        showFolderUpInToolbar: {type: Boolean, default: false }
+        showFolderUpInToolbar: {type: Boolean, default: false },
+        // disable any functionality beyond browsing, selecting, and opening content
+        readOnly: {type: Boolean, default: true } 
     },
     data() {
         return {
