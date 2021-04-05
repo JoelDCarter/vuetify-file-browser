@@ -91,6 +91,9 @@ export default {
                     let recurseSubFolders = async (item, pathSegments) => {
                         await this.readFolder(item);
                         if (pathSegments.length > 0) {
+                            if (item !== rootItem && !this.open.includes(item.path)) {
+                                this.open.push(item.path);
+                            }
                             let pathSegment = pathSegments.shift().toLowerCase();
                             if (pathSegment) {
                                 let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
