@@ -87,8 +87,23 @@ export default {
                 if (this.root.path)
                 {
                     let rootItem = { path: this.root.path + "/", children: [] };
-                    await this.readFolder(rootItem);
+                    let pathSegments = this.path.split("/").filter(segment => segment);
+                    let recurseSubFolders = async (item, pathSegments) => {
+                        await this.readFolder(item);
+                        if (pathSegments.length > 0) {
+                            let pathSegment = pathSegments.shift().toLowerCase();
+                            if (pathSegment) {
+                                let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
+                                if (nextItem) {
+                                    return await recurseSubFolders(nextItem, pathSegments);
+                                }
+                            }
+                        }
+                        return item.path;
+                    }
+                    let path = await recurseSubFolders(rootItem, pathSegments);
                     this.items = rootItem.children;
+                    this.$emit("path-changed", path);
                 }
                 else
                 {
@@ -102,11 +117,11 @@ export default {
                             children: []
                         }
                     ];
+                    if (this.path !== "") {
+                        this.$emit("path-changed", "");
+                    }
                 }
             }, 0);
-            if (this.path !== "") {
-                this.$emit("path-changed", "");
-            }
         },
         async readFolder(item) {
             this.$emit("loading", true);

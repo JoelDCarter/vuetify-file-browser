@@ -166,13 +166,15 @@ export default {
         maxUploadFileSize: { type: Number, default: 0 },
         // root node
         root: { type: Object, default: () => root },
+        // starting path
+        initialPath: { type: String, default: "/" },
         // indicate whether files should be displayed in the tree
         showFilesInTree: {type: Boolean, default: false }
     },
     data() {
         return {
             loading: 0,
-            path: "",
+            path: this.initialPath,
             activeStorage: null,
             uploadingFiles: false, // or an Array of files
             refreshPending: false,
@@ -247,7 +249,7 @@ export default {
     },
     mounted() {
         if (!this.path && !(this.tree && this.$vuetify.breakpoint.smAndUp)) {
-            this.pathChanged(this.root.path + "/");
+            this.pathChanged(this.root.path + this.path);
         }
     },
     beforeDestroy() {
