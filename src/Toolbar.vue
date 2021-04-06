@@ -61,14 +61,26 @@
                 </template>
                 <v-card>
                     <v-card-text>
-                        <v-text-field label="Name" v-model="newFolderName" hide-details></v-text-field>
+                        <v-form v-model="isNewFolderNameValid">
+                            <v-text-field 
+                                label="Name" 
+                                v-model="newFolderName" 
+                                :rules="[newFolderNameRules.required, newFolderNameRules.maxLength, newFolderNameRules.validName]"
+                                @keydown.enter.prevent="() => { if (isNewFolderNameValid) mkdir(); }"
+                                @keyup.esc.prevent="newFolderPopper = false"
+                                autofocus
+                                single-line 
+                                outlined 
+                                maxlength="254" 
+                            ></v-text-field>
+                        </v-form>
                     </v-card-text>
                     <v-card-actions>
                         <div class="flex-grow-1"></div>
                         <v-btn @click="newFolderPopper = false" depressed>Cancel</v-btn>
                         <v-btn
                             color="success"
-                            :disabled="!newFolderName"
+                            :disabled="!newFolderName || !isNewFolderNameValid"
                             depressed
                             @click="mkdir"
                         >Create Folder</v-btn>
@@ -100,7 +112,13 @@ export default {
     data() {
         return {
             newFolderPopper: false,
-            newFolderName: ""
+            newFolderName: "",
+            newFolderNameRules: {
+                required: name => !!name || "Required",
+                maxLength: name => name.length < 255 || "Max 254 characters",
+                validName: name => this.validNameRegex.test(name) || 'Name cannot contain \\/:*"?<>|: or end in a dot, begin with 2 dots, or contain reserved words'
+            },
+            isNewFolderNameValid: false
         };
     },
     computed: {
