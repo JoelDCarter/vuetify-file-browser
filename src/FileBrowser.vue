@@ -10,6 +10,8 @@
             :axios="axiosInstance"
             :showFolderUpInToolbar="showFolderUpInToolbar"
             :readOnly="readOnly"
+            :renamePending="renamePending"
+            :validNameRegex="validNameRegex"
             v-on:storage-changed="storageChanged"
             v-on:path-changed="pathChanged"
             v-on:add-files="addUploadingFiles"
@@ -25,6 +27,7 @@
                     :endpoints="endpoints"
                     :axios="axiosInstance"
                     :refreshPending="refreshPending"
+                    :renamePending="renamePending"
                     :showFiles="showFilesInTree"
                     v-on:path-changed="pathChanged"
                     v-on:loading="loadingChanged"
@@ -41,14 +44,18 @@
                     :endpoints="endpoints"
                     :axios="axiosInstance"
                     :refreshPending="refreshPending"
+                    :renamePending="renamePending"
                     :readOnly="readOnly"
+                    :validNameRegex="validNameRegex"
                     v-on:path-changed="pathChanged"
                     v-on:loading="loadingChanged"
                     v-on:refreshed="refreshPending = false"
                     v-on:file-deleted="refreshPending = true"
+                    v-on:file-moved="renamePending = false; refreshPending = true"
                     v-on:file-selected="(item) => $emit('file-selected', item)"
                     v-on:file-opened="(item) => $emit('file-opened', item)"
                     v-on:item-deleting="(item, setMessage) => $emit('item-deleting', item, setMessage)"
+                    v-on:item-renaming="renamePending = true"
                 ></list>
             </v-col>
         </v-row>
@@ -104,7 +111,8 @@ const endpoints = {
     list: { url: "/storage/{storage}/list?path={path}", method: "get" },
     upload: { url: "/storage/{storage}/upload?path={path}", method: "post" },
     mkdir: { url: "/storage/{storage}/mkdir?path={path}", method: "post" },
-    delete: { url: "/storage/{storage}/delete?path={path}", method: "post" }
+    delete: { url: "/storage/{storage}/delete?path={path}", method: "post" },
+    move: { url: "/storage/{storage}/move", method: "post" }
 };
 
 const fileIcons = {
@@ -177,7 +185,9 @@ export default {
         // indicate whether the button for navigating up one level should be displayed in the toolbar
         showFolderUpInToolbar: {type: Boolean, default: false },
         // disable any functionality beyond browsing, selecting, and opening content
-        readOnly: {type: Boolean, default: true } 
+        readOnly: { type: Boolean, default: true },
+        // valid file/folder name regular expression
+        validNameRegex: { type: RegExp, default: () => /^(?!(?:COM[0-9]|CON|LPT[0-9]|NUL|PRN|AUX|com[0-9]|con|lpt[0-9]|nul|prn|aux)(\.|\z)|\s|[\.]{2,})[^\\\/:*"?<>|]+(?<![\s\.])$/ }
     },
     data() {
         return {
@@ -186,7 +196,8 @@ export default {
             activeStorage: null,
             uploadingFiles: false, // or an Array of files
             refreshPending: false,
-            axiosInstance: null
+            axiosInstance: null,
+            renamePending: false
         };
     },
     computed: {

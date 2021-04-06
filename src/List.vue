@@ -26,7 +26,7 @@
                     </v-list-item-content>
                     <v-list-item-action>
                         <v-btn icon @click.stop="deleteItem(item)">
-                            <v-icon color="grey lighten-1">mdi-delete-outline</v-icon>
+                            <v-icon color="red">mdi-delete-outline</v-icon>
                         </v-btn>
                         <v-btn icon v-if="false">
                             <v-icon color="grey lighten-1">mdi-information</v-icon>
@@ -50,15 +50,37 @@
                     </v-list-item-avatar>
 
                     <v-list-item-content class="py-2">
-                        <v-list-item-title v-text="item.basename"></v-list-item-title>
-                        <v-list-item-subtitle>{{ formatBytes(item.size) }}</v-list-item-subtitle>
+                        <template v-if="renamePending && item === selectedFile">
+                            <v-form v-model="isNewNameValid">
+                                <v-text-field 
+                                    v-model="newName" 
+                                    :rules="[newNameRules.required, newNameRules.maxLength, newNameRules.validName]"
+                                    @click.self.stop.prevent=""
+                                    @blur.stop="renameItem(item)"
+                                    @keydown.enter.prevent="renameItem(item)"
+                                    @keyup.esc.prevent="$emit('file-moved')"
+                                    autofocus
+                                    single-line 
+                                    outlined 
+                                    counter 
+                                    maxlength="254" 
+                                ></v-text-field>
+                            </v-form>
+                        </template>
+                        <template v-else>
+                            <v-list-item-title v-text="item.basename"></v-list-item-title>
+                            <v-list-item-subtitle>{{ formatBytes(item.size) }}</v-list-item-subtitle>
+                        </template>
                     </v-list-item-content>
 
-                    <v-list-item-action>
-                        <v-btn icon v-if="!readOnly" @click.stop="deleteItem(item)">
-                            <v-icon color="grey lighten-1">mdi-delete-outline</v-icon>
+                    <v-list-item-action class="d-flex flex-row">
+                        <v-btn icon v-if="!readOnly && !renamePending" @click="newName = item.basename.substring(0); $emit('item-renaming')" title="Rename">
+                            <v-icon color="light-blue">mdi-pencil</v-icon>
                         </v-btn>
-                        <v-btn icon v-if="false">
+                        <v-btn icon v-if="!readOnly && !renamePending" @click.stop="deleteItem(item)" title="Delete">
+                            <v-icon color="red">mdi-delete-outline</v-icon>
+                        </v-btn>
+                        <v-btn icon v-if="false" title="Info">
                             <v-icon color="grey lighten-1">mdi-information</v-icon>
                         </v-btn>
                     </v-list-item-action>
@@ -112,7 +134,9 @@ export default {
         endpoints: Object,
         axios: Function,
         refreshPending: Boolean,
-        readOnly: Boolean
+        renamePending: Boolean,
+        readOnly: Boolean,
+        validNameRegex: RegExp
     },
     components: {
         Confirm
@@ -121,7 +145,14 @@ export default {
         return {
             items: [],
             filter: "",
-            selectedFile: null
+            selectedFile: null,
+            newName: "",
+            newNameRules: {
+                required: name => !!name || "Required",
+                maxLength: name => name.length < 255 || "Max 254 characters",
+                validName: name => this.validNameRegex.test(name) || 'Name cannot contain \\/:*"?<>|: or end in a dot, begin with 2 dots, or contain reserved words'
+            },
+            isNewNameValid: false
         };
     },
     computed: {
@@ -207,6 +238,9 @@ export default {
     methods: {
         formatBytes,
         itemClicked(item) {
+            if (this.renamePending && (item.type === "dir" || this.selectedFile === item)) {
+                return;
+            }
             if (item.type === "dir") {
                 this.changePath(item.path);
             } else {
@@ -269,6 +303,30 @@ export default {
                 this.$emit("file-deleted");
                 this.$emit("loading", false);
             }
+        },
+        async renameItem(item) {
+            if (!this.isNewNameValid) {
+                return;
+            }
+            if (item.basename !== this.newName) {
+                this.$emit("loading", true);
+
+                let url = this.endpoints.move.url
+                    .replace(new RegExp("{storage}", "g"), this.storage);
+
+                let config = {
+                    url,
+                    method: this.endpoints.move.method || "post",
+                    data: {
+                        currentPath: item.path,
+                        targetPath: item.path.substring(0, item.path.length - item.basename.length) + this.newName
+                    }
+                };
+
+                await this.axios.request(config);                    
+                this.$emit("loading", false);
+            }
+            this.$emit("file-moved");
         }
     },
     watch: {

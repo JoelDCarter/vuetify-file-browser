@@ -67,6 +67,7 @@ export default {
         endpoints: Object,
         axios: Function,
         refreshPending: Boolean,
+        renamePending: Boolean,
         showFiles: Boolean
     },
     data() {

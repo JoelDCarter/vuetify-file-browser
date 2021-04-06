@@ -93,7 +93,9 @@ export default {
         endpoints: Object,
         axios: Function,
         showFolderUpInToolbar: Boolean,
-        readOnly: Boolean
+        renamePending: Boolean,
+        readOnly: Boolean,
+        validNameRegex: RegExp
     },
     data() {
         return {
