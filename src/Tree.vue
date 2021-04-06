@@ -68,63 +68,59 @@ export default {
         axios: Function,
         refreshPending: Boolean,
         renamePending: Boolean,
-        showFiles: Boolean
+        showFiles: Boolean,
+        showRoot: Boolean
+    },
+    computed: {
+        rootItemDefaultValue() {
+            return { 
+                type: "dir", 
+                path: this.root.path + "/", 
+                basename: this.root.name || "root",
+                extension: "",
+                name: this.root.name || "root",
+                children: []
+            }
+        }
     },
     data() {
         return {
             open: [],
             active: [],
             items: [],
-            filter: ""
+            filter: "",
+            rootItem: this.rootItemDefaultValue
         };
     },
     methods: {
         init() {
             this.open = [];
+            this.active = [];
             this.items = [];
+            this.rootItem = this.rootItemDefaultValue;
             // set default files tree items (root item) in nextTick.
             // Otherwise this.open isn't cleared properly (due to syncing perhaps)
             setTimeout(async () => {
-                if (this.root.path)
-                {
-                    let rootItem = { path: this.root.path + "/", children: [] };
-                    let pathSegments = this.path.split("/").filter(segment => segment);
-                    let recurseSubFolders = async (item, pathSegments) => {
-                        await this.readFolder(item);
-                        if (pathSegments.length > 0) {
-                            if (item !== rootItem && !this.open.includes(item.path)) {
-                                this.open.push(item.path);
-                            }
-                            let pathSegment = pathSegments.shift().toLowerCase();
-                            if (pathSegment) {
-                                let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
-                                if (nextItem) {
-                                    return await recurseSubFolders(nextItem, pathSegments);
-                                }
+                let pathSegments = this.path.split("/").filter(segment => segment);
+                let recurseSubFolders = async (item, pathSegments) => {
+                    await this.readFolder(item);
+                    if (pathSegments.length > 0) {
+                        if (item !== this.rootItem && !this.open.includes(item.path)) {
+                            this.open.push(item.path);
+                        }
+                        let pathSegment = pathSegments.shift().toLowerCase();
+                        if (pathSegment) {
+                            let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
+                            if (nextItem) {
+                                return await recurseSubFolders(nextItem, pathSegments);
                             }
                         }
-                        return item.path;
                     }
-                    let path = await recurseSubFolders(rootItem, pathSegments);
-                    this.items = rootItem.children;
-                    this.$emit("path-changed", path);
+                    return item.path;
                 }
-                else
-                {
-                    this.items = [
-                        {
-                            type: "dir",
-                            path: "/",
-                            basename: this.root.name || "root",
-                            extension: "",
-                            name: this.root.name || "root",
-                            children: []
-                        }
-                    ];
-                    if (this.path !== "") {
-                        this.$emit("path-changed", "");
-                    }
-                }
+                let path = await recurseSubFolders(this.rootItem, pathSegments);
+                this.items = this.showRootInTree ? [this.rootItem] : this.rootItem.children;
+                this.$emit("path-changed", path);
             }, 0);
         },
         async readFolder(item) {
@@ -149,6 +145,10 @@ export default {
                     }
                     return item;
                 });
+            
+            if (!this.showRoot && item === this.rootItem) {
+                this.items = item.children;
+            }
 
             this.$emit("loading", false);
         },
@@ -164,7 +164,7 @@ export default {
         },
         findItem(path) {
             let stack = [];
-            stack.push(this.items[0]);
+            stack.push(this.rootItem);
             while (stack.length > 0) {
                 let node = stack.pop();
                 if (node.path == path) {

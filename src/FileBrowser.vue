@@ -29,6 +29,7 @@
                     :refreshPending="refreshPending"
                     :renamePending="renamePending"
                     :showFiles="showFilesInTree"
+                    :showRoot="showRootInTree"
                     v-on:path-changed="pathChanged"
                     v-on:loading="loadingChanged"
                     v-on:refreshed="refreshPending = false"
@@ -182,6 +183,8 @@ export default {
         initialPath: { type: String, default: "/" },
         // indicate whether files should be displayed in the tree
         showFilesInTree: {type: Boolean, default: false },
+        // indicate whether the root node should be displayed in the tree
+        showRootInTree: {type: Boolean, default: false },
         // indicate whether the button for navigating up one level should be displayed in the toolbar
         showFolderUpInToolbar: {type: Boolean, default: false },
         // disable any functionality beyond browsing, selecting, and opening content
