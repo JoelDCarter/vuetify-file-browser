@@ -22,10 +22,32 @@
                         <v-icon>mdi-folder-outline</v-icon>
                     </v-list-item-avatar>
                     <v-list-item-content class="py-2">
-                        <v-list-item-title v-text="item.basename"></v-list-item-title>
+                        <template v-if="renamePending && item === selectedItem">
+                            <v-form v-model="isNewNameValid">
+                                <v-text-field 
+                                    v-model="newName" 
+                                    :rules="[newNameRules.required, newNameRules.maxLength, newNameRules.validName]"
+                                    @click.self.stop.prevent=""
+                                    @blur.stop="renameItem(item)"
+                                    @keydown.enter.stop.prevent="renameItem(item)"
+                                    @keyup.esc.stop.prevent="$emit('item-renaming', item, false)"
+                                    autofocus
+                                    single-line 
+                                    outlined 
+                                    counter 
+                                    maxlength="254" 
+                                ></v-text-field>
+                            </v-form>
+                        </template>
+                        <template v-else>
+                            <v-list-item-title v-text="item.basename"></v-list-item-title>
+                        </template>
                     </v-list-item-content>
-                    <v-list-item-action>
-                        <v-btn icon @click.stop="deleteItem(item)">
+                    <v-list-item-action class="d-flex flex-row">
+                        <v-btn icon v-if="!readOnly.folders && !renamePending" @click.stop="beginRename(item)" title="Rename">
+                            <v-icon color="light-blue">mdi-pencil</v-icon>
+                        </v-btn>
+                        <v-btn icon v-if="!readOnly.folders && !renamePending" @click.stop="deleteItem(item)">
                             <v-icon color="red">mdi-delete-outline</v-icon>
                         </v-btn>
                         <v-btn icon v-if="false">
@@ -41,7 +63,7 @@
                     v-for="item in files"
                     :key="item.basename"
                     @click="itemClicked(item)"
-                    :input-value="item === selectedFile"
+                    :input-value="item === selectedItem"
                     v-opened="fileOpened(item)"
                     class="pl-0"
                 >
@@ -50,15 +72,15 @@
                     </v-list-item-avatar>
 
                     <v-list-item-content class="py-2">
-                        <template v-if="renamePending && item === selectedFile">
+                        <template v-if="renamePending && item === selectedItem">
                             <v-form v-model="isNewNameValid">
                                 <v-text-field 
                                     v-model="newName" 
                                     :rules="[newNameRules.required, newNameRules.maxLength, newNameRules.validName]"
                                     @click.self.stop.prevent=""
                                     @blur.stop="renameItem(item)"
-                                    @keydown.enter.prevent="renameItem(item)"
-                                    @keyup.esc.prevent="$emit('file-moved')"
+                                    @keydown.enter.stop.prevent="renameItem(item)"
+                                    @keyup.esc.stop.prevent="$emit('item-renaming', item, false)"
                                     autofocus
                                     single-line 
                                     outlined 
@@ -74,10 +96,10 @@
                     </v-list-item-content>
 
                     <v-list-item-action class="d-flex flex-row">
-                        <v-btn icon v-if="!readOnly && !renamePending" @click="newName = item.basename.substring(0); $emit('item-renaming')" title="Rename">
+                        <v-btn icon v-if="!readOnly.files && !renamePending" @click.stop="beginRename(item)" title="Rename">
                             <v-icon color="light-blue">mdi-pencil</v-icon>
                         </v-btn>
-                        <v-btn icon v-if="!readOnly && !renamePending" @click.stop="deleteItem(item)" title="Delete">
+                        <v-btn icon v-if="!readOnly.files && !renamePending" @click.stop="deleteItem(item)" title="Delete">
                             <v-icon color="red">mdi-delete-outline</v-icon>
                         </v-btn>
                         <v-btn icon v-if="false" title="Info">
@@ -122,6 +144,7 @@
 </template>
 
 <script>
+import { formatRelativeWithOptions } from 'date-fns/fp'
 import { formatBytes } from "./util";
 import Confirm from "./Confirm.vue";
 
@@ -135,7 +158,7 @@ export default {
         axios: Function,
         refreshPending: Boolean,
         renamePending: Boolean,
-        readOnly: Boolean,
+        readOnly: Object,
         validNameRegex: RegExp
     },
     components: {
@@ -145,7 +168,7 @@ export default {
         return {
             items: [],
             filter: "",
-            selectedFile: null,
+            selectedItem: null,
             newName: "",
             newNameRules: {
                 required: name => !!name || "Required",
@@ -238,16 +261,17 @@ export default {
     methods: {
         formatBytes,
         itemClicked(item) {
-            if (this.renamePending && (item.type === "dir" || this.selectedFile === item)) {
+            if (this.renamePending || this.selectedItem === item) {
                 return;
             }
+            
             if (item.type === "dir") {
                 this.changePath(item.path);
             } else {
-                if (this.selectedFile !== item) {
-                    this.selectedFile = item;
+                if (this.selectedItem !== item) {
+                    this.selectedItem = item;
                 } else {
-                    this.selectedFile = null;
+                    this.selectedItem = null;
                 }
             }
         },
@@ -260,7 +284,7 @@ export default {
         async load() {
             this.$emit("loading", true);
             if (this.isDir) {
-                this.selectedFile = null;
+                this.selectedItem = null;
                 let url = this.endpoints.list.url
                     .replace(new RegExp("{storage}", "g"), this.storage)
                     .replace(new RegExp("{path}", "g"), this.path);
@@ -299,10 +323,17 @@ export default {
                     method: this.endpoints.delete.method || "post"
                 };
 
-                await this.axios.request(config);
-                this.$emit("file-deleted");
-                this.$emit("loading", false);
+                await this.axios.request(config)
+                    .then(()=>{
+                        this.$emit("file-deleted");
+                        this.$emit("loading", false);
+                    });
             }
+        },
+        beginRename(item) {
+            this.newName = item.basename.substring(0); 
+            this.selectedItem = item; 
+            this.$emit('item-renaming', item, true);
         },
         async renameItem(item) {
             if (!this.isNewNameValid) {
@@ -319,14 +350,21 @@ export default {
                     method: this.endpoints.move.method || "post",
                     data: {
                         currentPath: item.path,
-                        targetPath: item.path.substring(0, item.path.length - item.basename.length) + this.newName
+                        targetPath: item.path
+                            .substring(0, 
+                                item.path.length - 
+                                item.basename.length - 
+                                (item.path.endsWith('/') ? 1 : 0)
+                            ) + this.newName
                     }
                 };
 
-                await this.axios.request(config);                    
-                this.$emit("loading", false);
+                await this.axios.request(config)
+                    .then(() => {
+                        this.$emit("item-renaming", item, false);
+                        this.$emit("loading", false);
+                    });            
             }
-            this.$emit("file-moved");
         }
     },
     watch: {
@@ -336,12 +374,17 @@ export default {
         },
         async refreshPending() {
             if (this.refreshPending) {
+                if (this.refreshPending) {
+                    this.$emit("item-renaming", this.selectedItem, false);
+                }
                 await this.load();
                 this.$emit("refreshed");
             }
         },
-        selectedFile(value) {
-            this.$emit("file-selected", value);
+        selectedItem(item) {
+            if (item && item.type === "file") { 
+                this.$emit("file-selected", item); 
+            }
         }
     }
 };

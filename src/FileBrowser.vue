@@ -9,7 +9,7 @@
             :endpoints="endpoints"
             :axios="axiosInstance"
             :showFolderUpInToolbar="showFolderUpInToolbar"
-            :readOnly="readOnly"
+            :readOnly="readOnlyFlags"
             :renamePending="renamePending"
             :validNameRegex="validNameRegex"
             v-on:storage-changed="storageChanged"
@@ -46,7 +46,7 @@
                     :axios="axiosInstance"
                     :refreshPending="refreshPending"
                     :renamePending="renamePending"
-                    :readOnly="readOnly"
+                    :readOnly="readOnlyFlags"
                     :validNameRegex="validNameRegex"
                     v-on:path-changed="pathChanged"
                     v-on:loading="loadingChanged"
@@ -56,7 +56,7 @@
                     v-on:file-selected="(item) => $emit('file-selected', item)"
                     v-on:file-opened="(item) => $emit('file-opened', item)"
                     v-on:item-deleting="(item, setMessage) => $emit('item-deleting', item, setMessage)"
-                    v-on:item-renaming="renamePending = true"
+                    v-on:item-renaming="itemRenaming"
                 ></list>
             </v-col>
         </v-row>
@@ -188,7 +188,7 @@ export default {
         // indicate whether the button for navigating up one level should be displayed in the toolbar
         showFolderUpInToolbar: {type: Boolean, default: false },
         // disable any functionality beyond browsing, selecting, and opening content
-        readOnly: { type: Boolean, default: true },
+        readOnly: { type: [Object, Boolean], default: true },
         // valid file/folder name regular expression
         validNameRegex: { type: RegExp, default: () => /^(?!(?:COM[0-9]|CON|LPT[0-9]|NUL|PRN|AUX|com[0-9]|con|lpt[0-9]|nul|prn|aux)(\.|\z)|\s|[\.]{2,})[^\\\/:*"?<>|]+(?<![\s\.])$/ }
     },
@@ -204,6 +204,26 @@ export default {
         };
     },
     computed: {
+        readOnlyFlags() {
+            const isObject = typeof this.readOnly === 'object' && this.readOnly !== null;
+
+            if (isObject) {
+                return {
+                    files: this.readOnly.hasOwnProperty("files") && this.readOnly.files,
+                    folders: this.readOnly.hasOwnProperty("folders") && this.readOnly.folders,                    
+                };
+            } else if (typeof(this.readOnly) === "boolean") {
+                return {
+                    files: this.readOnly,
+                    folders: this.readOnly
+                };
+            }
+
+            return {
+                    files: true,
+                    folders: true
+                };
+        },
         storagesArray() {
             let storageCodes = this.storages.split(","),
                 result = [];
@@ -214,6 +234,10 @@ export default {
         }
     },
     methods: {
+        itemRenaming(item, pending) {
+            this.renamePending = pending;
+            this.$emit('item-renaming', item, pending);
+        },
         loadingChanged(loading) {
             if (loading) {
                 this.loading++;
@@ -255,7 +279,10 @@ export default {
             this.$emit("change", path);
         },
         async responseErrorHandler(error) {
-            this.$emit("loading", false);
+            this.loadingChanged(false);
+            if (this.renamePending) {
+                this.renamePending = false;
+            }
             let confirmed = await this.$refs.confirm.open(
                     "Error",
                     `The server returned the following error:<br>${(error.response.data && error.response.data.detail) || error.message}`,
