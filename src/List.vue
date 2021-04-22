@@ -361,8 +361,8 @@ export default {
 
                 await this.axios.request(config)
                     .then(() => {
-                        this.$emit("item-renaming", item, false);
                         this.$emit("loading", false);
+                        this.$emit("item-renamed");
                     });            
             }
         }

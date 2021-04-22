@@ -87,7 +87,7 @@
                     </v-card-actions>
                 </v-card>
             </v-menu>
-            <v-btn v-if="!readOnly.files && path" icon @click="$refs.inputUpload.click()" title="Upload Files">
+            <v-btn v-if="!(readOnly.files || readOnly.folders)  && path" icon @click="$refs.inputUpload.click()" title="Upload Files">
                 <v-icon>mdi-file-upload-outline</v-icon>
                 <input v-show="false" ref="inputUpload" type="file" multiple @change="addFiles" />
             </v-btn>

@@ -18,7 +18,7 @@
             v-on:folder-created="refreshPending = true"
         ></toolbar>
         <v-row no-gutters>
-            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto">
+            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto" md="4">
                 <tree
                     :root="root"
                     :path="path"
@@ -57,6 +57,7 @@
                     v-on:file-opened="(item) => $emit('file-opened', item)"
                     v-on:item-deleting="(item, setMessage) => $emit('item-deleting', item, setMessage)"
                     v-on:item-renaming="itemRenaming"
+                    v-on:item-renamed="renamePending = false; refreshPending = true"
                 ></list>
             </v-col>
         </v-row>
