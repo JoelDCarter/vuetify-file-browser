@@ -20,6 +20,7 @@
         <v-row no-gutters>
             <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto" md="4">
                 <tree
+                    ref="tree"
                     :root="root"
                     :path="path"
                     :storage="activeStorage"
@@ -57,7 +58,8 @@
                     v-on:file-opened="(item) => $emit('file-opened', item)"
                     v-on:item-deleting="(item, setMessage) => $emit('item-deleting', item, setMessage)"
                     v-on:item-renaming="itemRenaming"
-                    v-on:item-renamed="renamePending = false; refreshPending = true"
+                    v-on:item-renamed="renamePending = false"
+                    v-on:folder-refreshing="folderRefreshing"
                 ></list>
             </v-col>
         </v-row>
@@ -235,6 +237,9 @@ export default {
         }
     },
     methods: {
+        async folderRefreshing(path) {
+            await this.$refs.tree.refreshFolder(path);
+        },
         itemRenaming(item, pending) {
             this.renamePending = pending;
             this.$emit('item-renaming', item, pending);

@@ -343,27 +343,32 @@ export default {
                 this.$emit("loading", true);
 
                 let url = this.endpoints.move.url
-                    .replace(new RegExp("{storage}", "g"), this.storage);
+                    .replace(new RegExp("{storage}", "g"), this.storage),
+                    parentPath = item.path
+                            .substring(0, 
+                                item.path.length - 
+                                item.basename.length - 
+                                (item.path.endsWith('/') ? 1 : 0)
+                            );
 
                 let config = {
                     url,
                     method: this.endpoints.move.method || "post",
                     data: {
                         currentPath: item.path,
-                        targetPath: item.path
-                            .substring(0, 
-                                item.path.length - 
-                                item.basename.length - 
-                                (item.path.endsWith('/') ? 1 : 0)
-                            ) + this.newName
+                        targetPath: parentPath + this.newName
                     }
                 };
 
                 await this.axios.request(config)
-                    .then(() => {
+                    .then(async () => {
                         this.$emit("loading", false);
                         this.$emit("item-renamed");
+                        this.$emit("folder-refreshing", parentPath);
+                        await this.load();
                     });            
+            } else {
+                this.$emit('item-renaming', item, false);
             }
         }
     },
@@ -374,7 +379,7 @@ export default {
         },
         async refreshPending() {
             if (this.refreshPending) {
-                if (this.refreshPending) {
+                if (this.renamePending) {
                     this.$emit("item-renaming", this.selectedItem, false);
                 }
                 await this.load();

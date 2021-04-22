@@ -177,6 +177,12 @@ export default {
                 }
             }
             return null;
+        },
+        async refreshFolder(path) {
+            let item = this.findItem(path);
+            if (item) {
+                await this.readFolder(item);
+            }
         }
     },
     watch: {
@@ -189,10 +195,9 @@ export default {
                 this.open.push(this.path);
             }
         },
-        async refreshPending(){
+        async refreshPending() {
             if (this.refreshPending) {
-                let item = this.findItem(this.path);
-                await this.readFolder(item);
+                this.refreshFolder(this.path);
                 this.$emit("refreshed");
             }
         }
