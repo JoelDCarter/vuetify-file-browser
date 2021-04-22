@@ -324,9 +324,9 @@ export default {
                 };
 
                 await this.axios.request(config)
-                    .then(()=>{
-                        this.$emit("file-deleted");
+                    .then(() => {
                         this.$emit("loading", false);
+                        this.$emit("item-deleted");
                     });
             }
         },
@@ -383,7 +383,7 @@ export default {
                     this.$emit("item-renaming", this.selectedItem, false);
                 }
                 await this.load();
-                this.$emit("refreshed");
+                this.$nextTick(() => this.$emit("refreshed"));
             }
         },
         selectedItem(item) {

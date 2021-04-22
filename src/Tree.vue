@@ -198,7 +198,7 @@ export default {
         async refreshPending() {
             if (this.refreshPending) {
                 this.refreshFolder(this.path);
-                this.$emit("refreshed");
+                this.$nextTick(() => this.$emit("refreshed"));
             }
         }
     },
