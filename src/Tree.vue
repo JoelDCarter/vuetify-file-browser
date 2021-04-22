@@ -134,23 +134,24 @@ export default {
                 method: this.endpoints.list.method || "get"
             };
 
-            let response = await this.axios.request(config);
-
-            // eslint-disable-next-line require-atomic-updates
-            item.children = response.data
-                .filter(item => item.type === "dir" || this.showFiles)
-                .map(item => {
-                    if (item.type === "dir") {
-                        item.children = [];
+            await this.axios.request(config)
+                .then((response) => {
+                    // eslint-disable-next-line require-atomic-updates
+                    item.children = response.data
+                        .filter(item => item.type === "dir" || this.showFiles)
+                        .map(item => {
+                            if (item.type === "dir") {
+                                item.children = [];
+                            }
+                            return item;
+                        });
+                    
+                    if (!this.showRoot && item === this.rootItem) {
+                        this.items = item.children;
                     }
-                    return item;
-                });
-            
-            if (!this.showRoot && item === this.rootItem) {
-                this.items = item.children;
-            }
 
-            this.$emit("loading", false);
+                    this.$emit("loading", false);
+                });
         },
         activeChanged(active) {
             this.active = active;
