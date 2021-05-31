@@ -58,6 +58,8 @@
 </template>
 
 <script>
+import _debounce from 'lodash.debounce'
+
 export default {
     props: {
         icons: Object,
@@ -153,16 +155,18 @@ export default {
                     this.$emit("loading", false);
                 });
         },
-        activeChanged(active) {
-            this.active = active;
+        activeChanged: _debounce(function (active) {
+            this.active = active;               
             let path = this.root.path ? this.root.path + "/" : "";
             if (active.length) {
                 path = active[0];
+            } else if (this.path) {
+                /*this.$nextTick(() =>*/ this.active.push(path = this.path);//);
             }
             if (this.path != path) {
                 this.$emit("path-changed", path);
             }
-        },
+        }, 500),
         findItem(path) {
             let stack = [];
             stack.push(this.rootItem);
