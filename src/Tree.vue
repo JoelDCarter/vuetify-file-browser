@@ -8,6 +8,7 @@
                 :search="filter"
                 :load-children="readFolder"
                 v-on:update:active="activeChanged"
+                v-on:update:open="openChanged"
                 item-key="path"
                 item-text="basename"
                 dense
@@ -162,20 +163,22 @@ export default {
 
             if (active.length === 0 && currentPath !== rootPath) {
                 active.push(currentPath);
+                this.active = active;
             }
 
-            for (let i = 0; i < pathSegments.length; i++) {
+            for (let i = 0; i < pathSegments.length - 1; i++) {
                 relativePathSegment += pathSegments[i] + "/";
                 if (!this.open.includes(relativePathSegment)) {
                     this.open.push(relativePathSegment);
                 }
             }
 
-            this.active = active;               
-
             if (this.path !== currentPath) {
                 this.$emit("path-changed", currentPath);
             }
+        },
+        openChanged(open) {
+            this.open = open;
         },
         findItem(path) {
             let stack = [];
