@@ -21,7 +21,7 @@
                     </v-list-item>
                 </v-list>
             </v-menu>
-            <v-btn text :input-value="path === '/'" @click="changePath('/')">
+            <v-btn text :input-value="path === '/'" @click="changePath(root.path + '/')">
                 <v-icon class="mr-2">{{storageObject.icon}}</v-icon>
                 {{root.name || storageObject.name}}
             </v-btn>

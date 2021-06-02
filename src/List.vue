@@ -151,6 +151,7 @@ import Confirm from "./Confirm.vue";
 export default {
     props: {
         icons: Object,
+        itemKey: String,
         storage: String,
         root: Object,
         path: String,
@@ -315,8 +316,10 @@ export default {
                 this.$emit("loading", true);
                 let url = this.endpoints.delete.url
                     .replace(new RegExp("{storage}", "g"), this.storage)
-                    .replace(new RegExp("{path}", "g"), item.path)
-                    .replace(new RegExp("{nodeId}", "g"), item.nodeId || "" );
+                    .replace(new RegExp("{path}", "g"), item.path);
+                if (this.itemKey !== "path") {
+                    url = url.replace(new RegExp(`{${this.itemKey}}`, "g"), item[this.itemKey] || "" );
+                }
 
                 let config = {
                     url,

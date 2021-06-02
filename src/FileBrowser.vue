@@ -25,8 +25,10 @@
                     :path="path"
                     :storage="activeStorage"
                     :icons="icons"
+                    :itemKey="itemKey"
                     :endpoints="endpoints"
                     :axios="axiosInstance"
+                    :enableFolderRefresh="enableRefreshInTree"
                     :refreshPending="refreshPending"
                     :renamePending="renamePending"
                     :showFiles="showFilesInTree"
@@ -43,6 +45,7 @@
                     :path="path"
                     :storage="activeStorage"
                     :icons="icons"
+                    :itemKey="itemKey"
                     :endpoints="endpoints"
                     :axios="axiosInstance"
                     :refreshPending="refreshPending"
@@ -170,6 +173,8 @@ export default {
         tree: { type: Boolean, default: true },
         // file icons set
         icons: { type: Object, default: () => fileIcons },
+        // item key to use for comparison
+        itemKey: { type: String, default: "path" },
         // custom backend endpoints
         endpoints: { type: Object, default: () => endpoints },
         // custom axios instance
@@ -184,6 +189,8 @@ export default {
         root: { type: Object, default: () => root },
         // starting path
         initialPath: { type: String, default: "/" },
+        // indicate whether files should be displayed in the tree
+        enableRefreshInTree: {type: Boolean, default: false },
         // indicate whether files should be displayed in the tree
         showFilesInTree: {type: Boolean, default: false },
         // indicate whether the root node should be displayed in the tree

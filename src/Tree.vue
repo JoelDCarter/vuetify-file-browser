@@ -25,7 +25,7 @@
                     {{item.basename}}
                     <v-btn
                         icon
-                        v-if="item.type === 'dir'"
+                        v-if="enableFolderRefresh && item.type === 'dir'"
                         @click.stop="readFolder(item)"
                         class="ml-1"
                     >
@@ -58,16 +58,18 @@
 </template>
 
 <script>
-import _debounce from 'lodash.debounce'
+import _findKey from 'lodash.findkey';
 
 export default {
     props: {
         icons: Object,
+        itemKey: String,
         storage: String,
         root: Object,
         path: String,
         endpoints: Object,
         axios: Function,
+        enableFolderRefresh: Boolean,
         refreshPending: Boolean,
         renamePending: Boolean,
         showFiles: Boolean,
@@ -104,26 +106,30 @@ export default {
             // Otherwise this.open isn't cleared properly (due to syncing perhaps)
             setTimeout(async () => {
                 let pathSegments = this.path.split("/").filter(segment => segment);
-                let recurseSubFolders = async (item, pathSegments) => {
-                    await this.readFolder(item);
-                    if (pathSegments.length > 0) {
-                        if (item !== this.rootItem && !this.open.includes(item.path)) {
-                            this.open.push(item.path);
-                        }
-                        let pathSegment = pathSegments.shift().toLowerCase();
-                        if (pathSegment) {
-                            let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
-                            if (nextItem) {
-                                return await recurseSubFolders(nextItem, pathSegments);
-                            }
-                        }
-                    }
-                    return item.path;
+                let path = await this.recurseSubFolders(this.rootItem, pathSegments);
+                if (this.showRootInTree) {
+                    this.items = this.rootItem;
+                } else {
+                    this.mergeFolders(this.rootItem.children, this.items); 
                 }
-                let path = await recurseSubFolders(this.rootItem, pathSegments);
-                this.items = this.showRootInTree ? [this.rootItem] : this.rootItem.children;
                 this.$emit("path-changed", path);
             }, 0);
+        },
+        async recurseSubFolders(item, pathSegments) {
+            await this.readFolder(item);
+            if (pathSegments.length > 0) {
+                if (item !== this.rootItem && !this.open.includes(item.path)) {
+                    this.open.push(item.path);
+                }
+                let pathSegment = pathSegments.shift().toLowerCase();
+                if (pathSegment) {
+                    let nextItem = item.children.find(child => child.name.toLowerCase() === pathSegment && child.type === "dir")
+                    if (nextItem) {
+                        return await this.recurseSubFolders(nextItem, pathSegments);
+                    }
+                }
+            }
+            return item.path;
         },
         async readFolder(item) {
             this.$emit("loading", true);
@@ -139,34 +145,38 @@ export default {
             await this.axios.request(config)
                 .then((response) => {
                     // eslint-disable-next-line require-atomic-updates
-                    item.children = response.data
-                        .filter(item => item.type === "dir" || this.showFiles)
-                        .map(item => {
-                            if (item.type === "dir") {
-                                item.children = [];
-                            }
-                            return item;
-                        });
-                    
-                    if (!this.showRoot && item === this.rootItem) {
-                        this.items = item.children;
-                    }
-
+                    this.mergeFolders(
+                        response.data
+                        .filter(item => item.type === "dir" || this.showFiles), 
+                        item.children);
+                        
                     this.$emit("loading", false);
                 });
         },
-        activeChanged: _debounce(function (active) {
+        activeChanged(active) {
+            let rootPath = this.root.path ? this.root.path + "/" : "";
+            let currentPath = active.length ? active[0] : this.path;
+            let relativePath = currentPath.startsWith(rootPath) ? currentPath.replace(rootPath, "") : currentPath;
+            let pathSegments = relativePath.split("/").filter(segment => segment);
+            let relativePathSegment = rootPath;
+
+            if (active.length === 0 && currentPath !== rootPath) {
+                active.push(currentPath);
+            }
+
+            for (let i = 0; i < pathSegments.length; i++) {
+                relativePathSegment += pathSegments[i] + "/";
+                if (!this.open.includes(relativePathSegment)) {
+                    this.open.push(relativePathSegment);
+                }
+            }
+
             this.active = active;               
-            let path = this.root.path ? this.root.path + "/" : "";
-            if (active.length) {
-                path = active[0];
-            } else if (this.path) {
-                /*this.$nextTick(() =>*/ this.active.push(path = this.path);//);
+
+            if (this.path !== currentPath) {
+                this.$emit("path-changed", currentPath);
             }
-            if (this.path != path) {
-                this.$emit("path-changed", path);
-            }
-        }, 500),
+        },
         findItem(path) {
             let stack = [];
             stack.push(this.rootItem);
@@ -181,6 +191,35 @@ export default {
                 }
             }
             return null;
+        },
+        mergeFolders(src, dest) {
+            // if we find an item by itemKey in dest that's not in the src, delete it
+            let i = 0;
+            let destIndicesToDelete = [];
+            for (; i < dest.length; i++) {
+                let missingItem = _findKey(src, [this.itemKey, dest[i][this.itemKey]]);
+
+                if (!missingItem) {
+                    destIndicesToDelete.push(i);
+                }
+            }
+            for (i = 0; i < destIndicesToDelete.length; i++) {
+                this.$delete(dest, destIndicesToDelete[i]);
+            }
+            // if we find an item in the src that's also in dest, then merge it's values. otherwise, add it to dest
+            for (i = 0; i < src.length; i++) {
+                let destItem = _findKey(dest, [this.itemKey, src[i][this.itemKey]]);
+
+                if (destItem) {
+                    // update dest item by merging props
+                    Object.assign(destItem, src[i]);
+                } else {
+                    if (src[i].type === "dir") {
+                        src[i].children = [];
+                    }
+                    dest.push(src[i]);
+                }
+            }
         },
         async refreshFolder(path) {
             let item = this.findItem(path);
