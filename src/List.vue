@@ -1,5 +1,5 @@
 <template>
-    <v-card flat tile min-height="380" class="d-flex flex-column">
+    <v-card flat tile min-height="380" class="d-flex flex-column full-height">
         <confirm ref="confirm"></confirm>
         <v-card-text
             v-if="!path"
@@ -9,7 +9,7 @@
             v-else-if="isFile"
             class="grow d-flex justify-center align-center"
         >File: {{ path }}</v-card-text>
-        <v-card-text v-else-if="dirs.length || files.length" class="grow">
+        <v-card-text v-else-if="dirs.length || files.length" class="/*grow*/ full-height-less-toolbar" style="overflow: auto;">
             <v-list subheader v-if="dirs.length">
                 <v-subheader>Folders</v-subheader>
                 <v-list-item

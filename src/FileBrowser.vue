@@ -1,5 +1,5 @@
 <template>
-    <v-card class="mx-auto" :loading="loading > 0">
+    <v-card class="mx-auto full-height" :loading="loading > 0">
         <confirm ref="confirm"></confirm>
         <toolbar
             :root="root"
@@ -17,9 +17,10 @@
             v-on:add-files="addUploadingFiles"
             v-on:folder-created="refreshPending = true"
         ></toolbar>
-        <v-row no-gutters>
-            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto" md="4">
+        <v-row class="full-height-less-toolbar" no-gutters>
+            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto" md="4" class="full-height">
                 <tree
+                    class="full-height"
                     ref="tree"
                     :root="root"
                     :path="path"
@@ -39,8 +40,9 @@
                 ></tree>
             </v-col>
             <v-divider v-if="tree" vertical></v-divider>
-            <v-col>
+            <v-col class="full-height">
                 <list
+                    class="full-height"
                     :root="root"
                     :path="path"
                     :storage="activeStorage"
@@ -321,4 +323,12 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+    .full-height {
+        position: relative;
+        height: 100%;
+
+        &-less-toolbar {
+            height: calc(100% - 48px);
+        }
+    }
 </style>
