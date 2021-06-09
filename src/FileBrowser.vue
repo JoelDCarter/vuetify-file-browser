@@ -17,8 +17,8 @@
             v-on:add-files="addUploadingFiles"
             v-on:folder-created="refreshPending = true"
         ></toolbar>
-        <v-row class="full-height-less-toolbar" no-gutters>
-            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" sm="auto" md="4" class="full-height">
+        <v-row class="full-height-less-toolbar flex-nowrap" no-gutters>
+            <v-col v-if="tree && $vuetify.breakpoint.smAndUp" xs="auto" sm="3" md="4" class="full-height">
                 <tree
                     class="full-height"
                     ref="tree"
@@ -40,7 +40,7 @@
                 ></tree>
             </v-col>
             <v-divider v-if="tree" vertical></v-divider>
-            <v-col class="full-height">
+            <v-col class="full-height" xs="auto" sm="9" md="8">
                 <list
                     class="full-height"
                     :root="root"
@@ -322,7 +322,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
     .full-height {
         position: relative;
         height: 100%;

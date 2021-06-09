@@ -1,5 +1,5 @@
 <template>
-    <v-card flat tile min-height="380" class="d-flex flex-column full-height">
+    <v-card flat tile min-height="380" class="d-flex flex-column">
         <confirm ref="confirm"></confirm>
         <v-card-text
             v-if="!path"
@@ -9,7 +9,7 @@
             v-else-if="isFile"
             class="grow d-flex justify-center align-center"
         >File: {{ path }}</v-card-text>
-        <v-card-text v-else-if="dirs.length || files.length" class="/*grow*/ full-height-less-toolbar" style="overflow: auto;">
+        <v-card-text v-else-if="dirs.length || files.length" class="full-height-less-toolbar scrollable-x-y">
             <v-list subheader v-if="dirs.length">
                 <v-subheader>Folders</v-subheader>
                 <v-list-item
@@ -40,7 +40,7 @@
                             </v-form>
                         </template>
                         <template v-else>
-                            <v-list-item-title v-text="item.basename"></v-list-item-title>
+                            <v-list-item-title class="text-truncate" v-text="item.basename"></v-list-item-title>
                         </template>
                     </v-list-item-content>
                     <v-list-item-action class="d-flex flex-row">
@@ -127,7 +127,9 @@
             <v-text-field
                 solo
                 flat
-                hide-details
+                hide-details 
+                clearable
+                autocomplete="off"
                 label="Filter"
                 v-model="filter"
                 prepend-inner-icon="mdi-filter-outline"

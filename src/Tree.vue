@@ -1,6 +1,6 @@
 <template>
-    <v-card flat tile min-width="250" min-height="380" class="d-flex flex-column folders-tree-card">
-        <div class="/*grow*/ scroll-x">
+    <v-card flat tile min-width="150" min-height="380" class="d-flex flex-column folders-tree-card">
+        <div class="full-height-less-toolbar scroll-x">
             <v-treeview
                 :open="open"
                 :active="active"
@@ -41,6 +41,8 @@
                 solo
                 flat
                 hide-details
+                clearable
+                autocomplete="off"
                 label="Filter"
                 v-model="filter"
                 prepend-inner-icon="mdi-filter-outline"
@@ -254,7 +256,7 @@ export default {
 };
 </script>
 
-<style lang="scss" scoped>
+<style lang="scss">
 .folders-tree-card {
     height: 100%;
 
